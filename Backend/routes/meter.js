@@ -33,7 +33,7 @@ router.post('/single', async (req, res) => {
         const readings = await Reading.find({ meter: meter._id })
         .populate('meter').sort({ timestamp: -1 })
 
-        res.status(200).send({ status: 'ok', msg: 'Readings fetched', readings })
+        res.status(200).send({ status: 'ok', msg: 'Readings fetched', readings, meter })
     } catch (err) {
         res.status(500).send({ status: 'error', msg: 'Error occurred', error: err.message })
     }
@@ -81,8 +81,8 @@ router.post('/update', async (req, res) => {
 // Delete a meter
 router.post('/delete', async (req, res) => {
     try {
-        const { meter } = req.body
-        const deletedMeter = await SmartMeter.findByIdAndDelete(meter._id)
+        const targetId = req.body?.meter?._id || req.body?.meterId || req.body?.id || req.body?.meter
+        const deletedMeter = await SmartMeter.findByIdAndDelete(targetId)
         if (!deletedMeter) 
             return res.status(404).send({ status: 'error', msg: 'Meter not found' })
 

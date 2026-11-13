@@ -21,6 +21,17 @@ const con = mongoose.connection
 con.on('open', () => console.log("Connected to Database"))
 con.on('error', (err) => console.log("Database error:", err))
 
+// mongoose.connect(process.env.mongo_uri)
+// const con = mongoose.connection
+// con.on('open', error => {
+//     if(error) {
+//         console.log(`Error connecting to the database ${error}`)
+//     } else {
+//         console.log('Connected to the Database')
+//     }
+// })
+
+
 // WebSocket connection
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id)

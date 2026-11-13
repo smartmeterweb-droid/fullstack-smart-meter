@@ -1,18 +1,22 @@
 import { useEffect } from 'react'
-import { io } from 'socket.io-client'
-
-const socket = io('https://fullstack-smart-meter.onrender.com') // backend server
+import socket from '../api/socket'
 
 const NotificationListener = ({ onNewNotification }) => {
     useEffect(() => {
-        socket.on('newNotification', (notification) => {
-            onNewNotification(notification)
-        })
+        const handler = (notification) => {
+            if (typeof onNewNotification === 'function') {
+                onNewNotification(notification)
+            }
+        }
 
-        return () => socket.off('newNotification')
+        socket.on('newNotification', handler)
+
+        return () => {
+            socket.off('newNotification', handler)
+        }
     }, [onNewNotification])
 
-    return null // This component doesn’t render anything
+    return null
 }
 
 export default NotificationListener

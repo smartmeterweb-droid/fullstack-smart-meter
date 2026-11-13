@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import axios from "axios"
+import api from "../api/axios"
 
 const MeterList = () => {
     const [meters, setMeters] = useState([])
@@ -10,12 +10,12 @@ const MeterList = () => {
     useEffect(() => {
         const fetchMeters = async () => {
             try {
-                const res = await axios.post("https://fullstack-smart-meter.onrender.com/meter/all")
+                const res = await api.post("/meter/all")
                 setMeters(res.data.meters || [])
-                setLoading(false)
             } catch (err) {
-                console.error(err)
+                console.error("Fetch meters error:", err)
                 setError("Failed to fetch meters")
+            } finally {
                 setLoading(false)
             }
         }
@@ -39,12 +39,16 @@ const MeterList = () => {
             {meters.map((meter) => (
                 <Link
                     key={meter._id}
-                    to={`/readings`}
-                    className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition"
+                    to="/readings"
+                    state={{ meterId: meter._id }}
+                    className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition block"
                 >
                     <h4 className="text-lg font-bold mb-1">{meter.name || `Meter ${meter._id}`}</h4>
                     <p className="text-gray-600 text-sm">
-                        Status: {meter.status || "Unknown"}
+                        Status: <span className="font-medium capitalize">{meter.status || "Unknown"}</span>
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                        Location: {meter.location || "N/A"}
                     </p>
                     <p className="text-gray-600 text-sm">
                         Last Reading: {meter.lastReading ? meter.lastReading.energy_consumed + " kWh" : "N/A"}

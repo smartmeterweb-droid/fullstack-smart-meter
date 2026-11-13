@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react"
+import React from "react"
 import { Link } from "react-router-dom"
 import { LayoutDashboard, FileText, Bell, PlusSquare } from "lucide-react"
 import MeterList from "../components/meterList"
-
 
 const Dashboard = () => {
     return (
@@ -33,7 +32,6 @@ const Dashboard = () => {
             <main className="flex-1 p-10">
                 <h2 className="text-2xl font-bold mb-2">Welcome to your Smart Meter Portal ⚡</h2>
                 <p className="text-gray-600 mb-8">Overview of your meters and live readings.</p>
-
 
                 {/* Meter List Component here */}
                 <MeterList />
@@ -67,13 +65,6 @@ const Dashboard = () => {
                             <p className="text-gray-600 text-sm">{item.desc}</p>
                         </Link>
                     ))}
-                </div>
-
-                {/* You can add a section for live readings cards */}
-                <h3 className="text-xl font-semibold mb-4">Live Readings</h3>
-                <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-                
-                    {/* Here you could render LiveReadingCard components */}
                 </div>
             </main>
         </div>
