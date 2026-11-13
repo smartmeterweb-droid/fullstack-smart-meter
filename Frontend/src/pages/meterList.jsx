@@ -8,35 +8,48 @@ const MeterList = () => {
   const [error, setError] = useState("")
   const navigate = useNavigate()
 
-  useEffect(() => {
-    const fetchMeters = async () => {
-      try {
-        const res = await api.post("/meter/all")
-        setMeters(res.data.meters || [])
-      } catch (err) {
-        console.error("Fetch meters error:", err)
-        setError("Failed to fetch meters")
-      } finally {
-        setLoading(false)
-      }
+  const fetchMeters = async () => {
+    setLoading(true)
+    setError("")
+    try {
+      const res = await api.post("/meter/all")
+      setMeters(res.data.meters || [])
+    } catch (err) {
+      console.error("Fetch meters error:", err)
+      setError("Failed to fetch meters. The backend server might still be waking up.")
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchMeters()
   }, [])
 
   if (loading)
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <p className="text-gray-600 text-lg">Loading meters...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 gap-3">
+        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-600 text-base font-medium">Loading meters from database...</p>
+        <p className="text-gray-400 text-xs">If the server was asleep, this can take a few seconds.</p>
       </div>
     )
 
   if (error)
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 gap-4">
-        <p className="text-red-500 text-lg">{error}</p>
-        <Link to="/dashboard" className="px-4 py-2 bg-[#0f172a] text-white rounded-lg">
-          Back to Dashboard
-        </Link>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 gap-4 p-6">
+        <p className="text-red-500 text-lg text-center max-w-md">{error}</p>
+        <div className="flex gap-3">
+          <button
+            onClick={fetchMeters}
+            className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition"
+          >
+            Try Again
+          </button>
+          <Link to="/dashboard" className="px-5 py-2.5 bg-[#0f172a] text-white rounded-xl text-sm font-medium">
+            Back to Dashboard
+          </Link>
+        </div>
       </div>
     )
 
@@ -93,6 +106,11 @@ const MeterList = () => {
                     <p className="text-sm text-gray-600">
                       Serial: {meter.serialNumber || "N/A"} | Location: {meter.location || "N/A"}
                     </p>
+                    {meter.lastReading && (
+                      <p className="text-xs text-indigo-600 mt-1 font-medium">
+                        Last Reading: {meter.lastReading.energy_consumed} kWh ({meter.lastReading.status})
+                      </p>
+                    )}
                   </div>
                   <button
                     onClick={() =>

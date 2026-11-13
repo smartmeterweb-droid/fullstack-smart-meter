@@ -7,27 +7,45 @@ const MeterList = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
 
-    useEffect(() => {
-        const fetchMeters = async () => {
-            try {
-                const res = await api.post("/meter/all")
-                setMeters(res.data.meters || [])
-            } catch (err) {
-                console.error("Fetch meters error:", err)
-                setError("Failed to fetch meters")
-            } finally {
-                setLoading(false)
-            }
+    const fetchMeters = async () => {
+        setLoading(true)
+        setError("")
+        try {
+            const res = await api.post("/meter/all")
+            setMeters(res.data.meters || [])
+        } catch (err) {
+            console.error("Fetch meters error:", err)
+            setError("Failed to fetch meters. Server might be warming up.")
+        } finally {
+            setLoading(false)
         }
+    }
+
+    useEffect(() => {
         fetchMeters()
     }, [])
 
     if (loading) {
-        return <p className="text-gray-500 animate-pulse">Loading meters...</p>
+        return (
+            <div className="flex items-center gap-2 py-4">
+                <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-gray-500 text-sm">Loading meters from database...</p>
+            </div>
+        )
     }
 
     if (error) {
-        return <p className="text-red-600">{error}</p>
+        return (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between">
+                <p className="text-red-600 text-sm">{error}</p>
+                <button
+                    onClick={fetchMeters}
+                    className="text-xs font-semibold text-indigo-600 hover:underline ml-4"
+                >
+                    Retry
+                </button>
+            </div>
+        )
     }
 
     if (meters.length === 0) {
@@ -41,9 +59,9 @@ const MeterList = () => {
                     key={meter._id}
                     to="/readings"
                     state={{ meterId: meter._id }}
-                    className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition block"
+                    className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition block border border-gray-100"
                 >
-                    <h4 className="text-lg font-bold mb-1">{meter.name || `Meter ${meter._id}`}</h4>
+                    <h4 className="text-lg font-bold mb-1 text-gray-800">{meter.name || `Meter ${meter._id}`}</h4>
                     <p className="text-gray-600 text-sm">
                         Status: <span className="font-medium capitalize">{meter.status || "Unknown"}</span>
                     </p>
