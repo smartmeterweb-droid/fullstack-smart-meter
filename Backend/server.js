@@ -11,7 +11,7 @@ const dotenv = require('dotenv')
 dotenv.config()
 
 // Middleware
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:4885'], credentials: true }))
+app.use(cors({ origin: true, credentials: true }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
@@ -21,17 +21,6 @@ const con = mongoose.connection
 con.on('open', () => console.log("Connected to Database"))
 con.on('error', (err) => console.log("Database error:", err))
 
-// mongoose.connect(process.env.mongo_uri)
-// const con = mongoose.connection
-// con.on('open', error => {
-//     if(error) {
-//         console.log(`Error connecting to the database ${error}`)
-//     } else {
-//         console.log('Connected to the Database')
-//     }
-// })
-
-
 // WebSocket connection
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id)
@@ -40,7 +29,7 @@ io.on("connection", (socket) => {
 // Routes (pass io if needed for emitting)
 app.use('/auth', require('./routes/auth'))
 app.use('/meter', require('./routes/meter'))
-app.use('/readings', require('./routes/readings')(io)) // <- adjust reading route to receive io
+app.use('/readings', require('./routes/readings')(io))
 app.use('/notification', require('./routes/notification'))
 
 // Start server

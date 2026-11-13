@@ -1,6 +1,11 @@
 import axios from 'axios'
 
-export const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:4885"
+// In production (e.g. Vercel), fall back to Render live backend if VITE_API_URL isn't explicitly configured
+export const BACKEND_URL =
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.PROD
+        ? "https://fullstack-smart-meter.onrender.com"
+        : "http://localhost:4885")
 
 // Create Axios instance
 const api = axios.create({

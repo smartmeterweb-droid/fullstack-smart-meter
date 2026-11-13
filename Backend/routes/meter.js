@@ -4,22 +4,34 @@ const router = express.Router()
 const SmartMeter = require('../models/smartMeter')
 const Reading = require('../models/readings')       
 
-
-// Get all meters
+// Get all meters (with their latest reading attached)
 router.post('/all', async (req, res) => {
     try {
-        const meters = await SmartMeter.find()
+        const meters = await SmartMeter.find().lean()
 
         if (meters.length === 0) {
-            return res.status(200).send({status: "ok", msg: "No meters found."})
+            return res.status(200).send({ status: "ok", msg: "No meters found.", meters: [] })
         }
 
-        res.status(200).send({ status: 'ok', msg: 'Meters fetched', count: meters.length, meters })
+        const metersWithReading = await Promise.all(
+            meters.map(async (meter) => {
+                const lastReading = await Reading.findOne({ meter: meter._id })
+                    .sort({ timestamp: -1 })
+                    .lean()
+                return { ...meter, lastReading }
+            })
+        )
+
+        res.status(200).send({ 
+            status: 'ok', 
+            msg: 'Meters fetched', 
+            count: metersWithReading.length, 
+            meters: metersWithReading 
+        })
     } catch (err) {
         res.status(500).send({ status: 'error', msg: 'Error occurred', error: err.message })
-   }
+    }
 })
-
 
 // Get single meter and its readings
 router.post('/single', async (req, res) => {
@@ -31,14 +43,14 @@ router.post('/single', async (req, res) => {
             return res.status(404).send({ status: 'error', msg: 'Meter not found' })
 
         const readings = await Reading.find({ meter: meter._id })
-        .populate('meter').sort({ timestamp: -1 })
+            .populate('meter')
+            .sort({ timestamp: -1 })
 
         res.status(200).send({ status: 'ok', msg: 'Readings fetched', readings, meter })
     } catch (err) {
         res.status(500).send({ status: 'error', msg: 'Error occurred', error: err.message })
     }
 })
-
 
 // Add a new meter
 router.post('/add', async (req, res) => {
@@ -53,7 +65,7 @@ router.post('/add', async (req, res) => {
         meter.name = name
         meter.serialNumber = serialNumber
         meter.location = location
-        meter.status = 'active' // Initial status
+        meter.status = status || 'active'
 
         await meter.save()
         res.status(201).send({ status: 'ok', msg: 'Meter added', meter })
@@ -61,7 +73,6 @@ router.post('/add', async (req, res) => {
         res.status(500).send({ status: 'error', msg: 'Error occurred', error: err.message })
     }
 })
-
 
 // Update a meter
 router.post('/update', async (req, res) => {
@@ -77,7 +88,6 @@ router.post('/update', async (req, res) => {
     }
 })
 
-
 // Delete a meter
 router.post('/delete', async (req, res) => {
     try {
@@ -85,6 +95,9 @@ router.post('/delete', async (req, res) => {
         const deletedMeter = await SmartMeter.findByIdAndDelete(targetId)
         if (!deletedMeter) 
             return res.status(404).send({ status: 'error', msg: 'Meter not found' })
+
+        // Also clean up associated readings
+        await Reading.deleteMany({ meter: targetId })
 
         res.status(200).send({ status: 'ok', msg: 'Meter deleted successfully' })
     } catch (err) {

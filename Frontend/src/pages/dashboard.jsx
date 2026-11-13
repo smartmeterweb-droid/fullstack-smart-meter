@@ -1,13 +1,35 @@
-import React from "react"
-import { Link } from "react-router-dom"
+import React, { useEffect, useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
 import { LayoutDashboard, FileText, Bell, PlusSquare } from "lucide-react"
 import MeterList from "../components/meterList"
+import LiveReadingCard from "../components/liveReadingCard"
+import api from "../api/axios"
 
 const Dashboard = () => {
+    const navigate = useNavigate()
+    const [recentReadings, setRecentReadings] = useState([])
+    const [loadingReadings, setLoadingReadings] = useState(true)
+
+    useEffect(() => {
+        const fetchRecentReadings = async () => {
+            try {
+                const res = await api.post("/readings/all")
+                const all = res.data?.readings || []
+                // Take top 3 most recent readings
+                setRecentReadings(all.slice(0, 3))
+            } catch (err) {
+                console.error("Dashboard fetch readings error:", err)
+            } finally {
+                setLoadingReadings(false)
+            }
+        }
+        fetchRecentReadings()
+    }, [])
+
     return (
         <div className="flex min-h-screen bg-gray-50">
             {/* Sidebar */}
-            <aside className="w-64 bg-[#0f172a] text-gray-200 flex flex-col p-6 rounded-r-3xl">
+            <aside className="w-64 bg-[#0f172a] text-gray-200 flex flex-col p-6 rounded-r-3xl shrink-0">
                 <h1 className="text-2xl font-bold mb-8">Smart Meter Dashboard</h1>
                 <nav className="space-y-3">
                     <Link to="/dashboard" className="flex items-center gap-3 bg-[#1e293b] px-4 py-2 rounded-xl font-medium">
@@ -29,12 +51,40 @@ const Dashboard = () => {
             </aside>
 
             {/* Main content */}
-            <main className="flex-1 p-10">
+            <main className="flex-1 p-6 md:p-10 overflow-x-hidden">
                 <h2 className="text-2xl font-bold mb-2">Welcome to your Smart Meter Portal ⚡</h2>
                 <p className="text-gray-600 mb-8">Overview of your meters and live readings.</p>
 
-                {/* Meter List Component here */}
+                {/* Meter List Component */}
+                <h3 className="text-xl font-semibold mb-4">Connected Meters</h3>
                 <MeterList />
+
+                {/* Recent Readings Section */}
+                <div className="flex justify-between items-center mb-4 mt-10">
+                    <h3 className="text-xl font-semibold">Latest Live Readings</h3>
+                    <Link to="/readings" className="text-sm font-medium text-indigo-600 hover:underline">
+                        View All Readings →
+                    </Link>
+                </div>
+                
+                {loadingReadings ? (
+                    <p className="text-gray-500 animate-pulse">Loading latest readings...</p>
+                ) : recentReadings.length === 0 ? (
+                    <p className="text-gray-500">No readings available yet.</p>
+                ) : (
+                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                        {recentReadings.map((reading) => (
+                            <LiveReadingCard
+                                key={reading._id}
+                                reading={reading}
+                                onView={(r) => {
+                                    const mId = r.meter?._id || r.meter
+                                    navigate("/readings", { state: { meterId: mId } })
+                                }}
+                            />
+                        ))}
+                    </div>
+                )}
 
                 {/* Quick Actions */}
                 <h3 className="text-xl font-semibold mb-4 mt-10">Quick Actions</h3>
@@ -59,7 +109,7 @@ const Dashboard = () => {
                         <Link
                           key={i}
                           to={item.to}
-                          className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition"
+                          className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition block"
                         >
                             <h4 className="text-lg font-bold mb-1">{item.title}</h4>
                             <p className="text-gray-600 text-sm">{item.desc}</p>
