@@ -1,3 +1,4 @@
 node_modules
 .env
 devSecret.js
+seed.js
